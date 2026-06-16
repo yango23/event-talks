@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearSearchBtn = document.getElementById('clearSearchBtn');
     const refreshFeedBtn = document.getElementById('refreshFeedBtn');
     const refreshIcon = refreshFeedBtn.querySelector('.refresh-icon');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
     const notesTimeline = document.getElementById('notesTimeline');
     const entriesContainer = document.getElementById('entriesContainer');
     const feedLoading = document.getElementById('feedLoading');
@@ -437,6 +438,83 @@ document.addEventListener('DOMContentLoaded', () => {
     // Refresh Button click
     refreshFeedBtn.addEventListener('click', () => {
         loadData(true);
+    });
+
+    // Export CSV click
+    exportCsvBtn.addEventListener('click', () => {
+        // Collect currently filtered notes
+        const filter = state.activeFilter;
+        const query = state.searchQuery.toLowerCase().trim();
+        const csvRows = [];
+        
+        // Add CSV Headers
+        csvRows.push(['Date', 'Category', 'Type', 'Description', 'Link'].map(h => `"${h.replace(/"/g, '""')}"`).join(','));
+        
+        state.releases.forEach(day => {
+            const matchingNotes = day.notes.filter(note => {
+                if (filter !== 'all' && note.type !== filter) return false;
+                if (query) {
+                    const inTitle = day.title.toLowerCase().includes(query);
+                    const inCategory = note.category.toLowerCase().includes(query);
+                    const inHtml = note.html.toLowerCase().includes(query);
+                    return inTitle || inCategory || inHtml;
+                }
+                return true;
+            });
+            
+            matchingNotes.forEach(note => {
+                // Convert HTML description to plain text
+                const cleanDesc = note.html
+                    .replace(/<a href="([^"]+)">([^<]+)<\/a>/g, '$2 ($1)')
+                    .replace(/<li>/g, '* ')
+                    .replace(/<\/li>/g, '\n')
+                    .replace(/<[^>]*>/g, '')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&amp;/g, '&')
+                    .trim();
+                
+                const row = [
+                    day.title,
+                    note.category,
+                    note.type,
+                    cleanDesc,
+                    day.link
+                ].map(val => `"${val.replace(/"/g, '""')}"`).join(',');
+                
+                csvRows.push(row);
+            });
+        });
+        
+        if (csvRows.length <= 1) {
+            // Only headers present
+            alert("No release notes found matching current filters to export.");
+            return;
+        }
+        
+        // Create CSV Blob and trigger download
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute("href", url);
+        // Format filename based on active filters
+        let filterSuffix = filter !== 'all' ? `_${filter}` : '';
+        let querySuffix = query ? `_search_${query.replace(/[^a-z0-9]/gi, '_')}` : '';
+        link.setAttribute("download", `bigquery_release_notes${filterSuffix}${querySuffix}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Show copy toast feedback with custom message
+        const origText = toast.textContent;
+        toast.textContent = "CSV Exported successfully!";
+        showToast();
+        setTimeout(() => {
+            toast.textContent = origText;
+        }, 2500);
     });
 
     // Reset Filters & Search click
