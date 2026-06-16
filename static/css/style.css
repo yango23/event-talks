@@ -1550,3 +1550,226 @@ body.light-theme .theme-switch-label:nth-of-type(1) {
 body.light-theme .theme-switch-label:nth-of-type(2) {
     color: var(--text-title);
 }
+
+/* ==========================================================================
+   Search Match Count Badge
+   ========================================================================== */
+.search-match-count {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--accent);
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    margin-right: 0.5rem;
+    display: none;
+    align-items: center;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    flex-shrink: 0;
+}
+
+.search-match-count.show {
+    display: inline-flex;
+}
+
+/* ==========================================================================
+   Time Range Selector Card
+   ========================================================================== */
+.time-range-card {
+    padding: 1.25rem 1.5rem;
+}
+
+.time-range-selector {
+    display: flex;
+    gap: 0.4rem;
+    width: 100%;
+}
+
+.time-range-btn {
+    flex-grow: 1;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.5rem 0.25rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+    text-align: center;
+}
+
+.time-range-btn:hover {
+    background: var(--bg-card);
+    border-color: var(--border-color-active);
+    color: var(--text-title);
+}
+
+.time-range-btn.active {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.05);
+}
+
+.time-range-btn:active {
+    transform: scale(0.97);
+}
+
+/* ==========================================================================
+   Collapsible Timeline Entries
+   ========================================================================== */
+.timeline-date-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.timeline-date-header:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.4);
+}
+
+.collapse-day-icon {
+    margin-left: 0.6rem;
+    transition: transform var(--transition-normal);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-entry.collapsed .collapse-day-icon {
+    transform: rotate(-90deg);
+}
+
+.timeline-entry.collapsed .timeline-notes {
+    max-height: 0;
+    overflow: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-left-color: transparent;
+    opacity: 0;
+}
+
+.timeline-notes {
+    transition: max-height 0.4s ease-out, border-color var(--transition-fast), opacity 0.3s ease;
+    max-height: 2000px;
+    opacity: 1;
+}
+
+/* ==========================================================================
+   Skeleton Screens Loading State
+   ========================================================================== */
+.skeleton-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.skeleton-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.skeleton-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-badge {
+    width: 80px;
+    height: 22px;
+    border-radius: 11px;
+    background: var(--border-color);
+}
+
+.skeleton-actions {
+    width: 60px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--border-color);
+}
+
+.skeleton-line {
+    height: 14px;
+    border-radius: 4px;
+    background: var(--border-color);
+    width: 100%;
+}
+
+.skeleton-line.short {
+    width: 40%;
+}
+
+.skeleton-line.medium {
+    width: 70%;
+}
+
+/* Shimmer keyframe animation */
+.skeleton-card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.04) 20%,
+        rgba(255, 255, 255, 0.08) 60%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 1.5s infinite;
+}
+
+body.light-theme .skeleton-card::after {
+    background-image: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(0, 0, 0, 0.015) 20%,
+        rgba(0, 0, 0, 0.035) 60%,
+        rgba(255, 255, 255, 0) 100%
+    );
+}
+
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* ==========================================================================
+   Smooth Search Filtering Card Transitions
+   ========================================================================== */
+.note-card {
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform 0.4s ease, opacity 0.3s ease;
+}
+
+.note-card.filtering-out {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+    pointer-events: none;
+    height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    border-color: transparent;
+    overflow: hidden;
+}

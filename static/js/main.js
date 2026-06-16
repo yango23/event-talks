@@ -8,12 +8,15 @@ document.addEventListener('DOMContentLoaded', () => {
         releases: [],      // Raw data from API
         activeFilter: 'all',
         searchQuery: '',
+        activeRange: 'all', // time range in days: 'all', '7', '30', '90'
+        collapsedDays: {},  // map of day titles to collapsed boolean
         theme: 'dark'
     };
 
     // DOM Elements
     const themeToggleBtn = document.getElementById('themeToggleBtn');
     const searchInput = document.getElementById('searchInput');
+    const searchMatchCount = document.getElementById('searchMatchCount');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
     const refreshFeedBtn = document.getElementById('refreshFeedBtn');
     const refreshIcon = refreshFeedBtn.querySelector('.refresh-icon');
@@ -31,8 +34,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalEntriesEl = document.getElementById('totalEntries');
     const categoryBreakdownList = document.getElementById('categoryBreakdownList');
     const filterChips = document.querySelectorAll('.filter-chip');
+    const timeRangeBtns = document.querySelectorAll('.time-range-btn');
     const feedHeading = document.getElementById('feedHeading');
     const feedSubtitle = document.getElementById('feedSubtitle');
+
+    // Helper to check if a release note is within the selected day range
+    function isWithinRange(dateStr, rangeDays) {
+        if (rangeDays === 'all') return true;
+        const date = new Date(dateStr);
+        // Anchor "now" to the mock local time in system metadata
+        const now = new Date("2026-06-16T21:11:08+04:00");
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= parseInt(rangeDays);
+    }
 
     // SVG Icons Map for badges
     const icons = {
@@ -110,9 +125,11 @@ document.addEventListener('DOMContentLoaded', () => {
      * Updates stats counter and breakdown bars in left panel
      */
     function updateStatistics() {
-        // Calculate counts
+        const query = state.searchQuery.toLowerCase().trim();
+        const range = state.activeRange;
+        
         let totalItems = 0;
-        let totalDays = state.releases.length;
+        let totalDays = 0;
         
         const counts = {
             feature: 0,
@@ -124,28 +141,42 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         state.releases.forEach(day => {
+            // Check if day is within range
+            if (!isWithinRange(day.updated, range)) return;
+            
+            let dayHasNote = false;
             day.notes.forEach(note => {
+                // Check if note matches search query (if any)
+                if (query) {
+                    const inTitle = day.title.toLowerCase().includes(query);
+                    const inCategory = note.category.toLowerCase().includes(query);
+                    const inHtml = note.html.toLowerCase().includes(query);
+                    if (!inTitle && !inCategory && !inHtml) return;
+                }
+                
                 totalItems++;
+                dayHasNote = true;
                 if (counts[note.type] !== undefined) {
                     counts[note.type]++;
                 } else {
                     counts.announcement++;
                 }
             });
+            if (dayHasNote) totalDays++;
         });
 
         // Set top numbers
         totalUpdatesEl.textContent = totalItems;
         totalEntriesEl.textContent = totalDays;
 
-        // Set counts inside filter chips
+        // Set counts inside filter chips dynamically
         document.getElementById('count-all').textContent = totalItems;
         for (const [type, count] of Object.entries(counts)) {
             const countEl = document.getElementById(`count-${type}`);
             if (countEl) countEl.textContent = count;
         }
 
-        // Draw progress breakdown list
+        // Draw progress breakdown list based on active items
         categoryBreakdownList.innerHTML = '';
         const sortedCategories = Object.entries(counts).sort((a, b) => b[1] - a[1]);
         
@@ -206,8 +237,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const filter = state.activeFilter;
         const query = state.searchQuery.toLowerCase().trim();
+        const range = state.activeRange;
 
         state.releases.forEach(day => {
+            // Time range check
+            if (!isWithinRange(day.updated, range)) return;
+
             // Filter notes inside the day
             const matchingNotes = day.notes.filter(note => {
                 // Category Filter Check
@@ -230,11 +265,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Create Timeline Day element
                 const entryDiv = document.createElement('div');
-                entryDiv.className = 'timeline-entry';
+                const isCollapsed = state.collapsedDays[day.title] === true;
+                entryDiv.className = `timeline-entry${isCollapsed ? ' collapsed' : ''}`;
                 
-                // Add day title header
+                // Add day title header with collapse chevron
                 let entryHTML = `
-                    <div class="timeline-date-header">${day.title}</div>
+                    <div class="timeline-date-header" data-day="${day.title}">
+                        ${day.title}
+                        <span class="collapse-day-icon">
+                            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </span>
+                    </div>
                     <div class="timeline-notes">
                 `;
 
@@ -279,13 +322,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 entryDiv.innerHTML = entryHTML;
                 entriesContainer.appendChild(entryDiv);
 
+                // Collapsible Header click listener
+                const header = entryDiv.querySelector('.timeline-date-header');
+                header.addEventListener('click', () => {
+                    const dayTitle = header.getAttribute('data-day');
+                    const isNowCollapsed = !state.collapsedDays[dayTitle];
+                    state.collapsedDays[dayTitle] = isNowCollapsed;
+                    
+                    if (isNowCollapsed) {
+                        entryDiv.classList.add('collapsed');
+                    } else {
+                        entryDiv.classList.remove('collapsed');
+                    }
+                });
+
                 // Add Clipboard copy events to the cards in this day
                 entryDiv.querySelectorAll('.copy-btn').forEach((btn, index) => {
                     btn.addEventListener('click', () => {
                         const note = matchingNotes[index];
-                        // Convert HTML to simple formatted text for clipboard
                         let text = `[BigQuery Release - ${day.title}] (${note.category})\n\n`;
-                        // Remove HTML tags, resolve hyperlinks
                         let textBody = note.html
                             .replace(/<a href="([^"]+)">([^<]+)<\/a>/g, '$2 ($1)')
                             .replace(/<li>/g, '* ')
@@ -339,8 +394,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (query) {
             feedSubtitle.textContent = `Found ${totalMatchingItems} matching items for "${state.searchQuery}"`;
+            searchMatchCount.textContent = `${totalMatchingItems} matches`;
+            searchMatchCount.classList.add('show');
         } else {
             feedSubtitle.textContent = `Showing ${totalMatchingItems} updates across ${totalMatchingDays} release days`;
+            searchMatchCount.classList.remove('show');
         }
     }
 
@@ -412,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             clearSearchBtn.classList.remove('show');
         }
-        renderFeed();
+        processAndRender(); // dynamic count update
     });
 
     // Clear Search click
@@ -420,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.value = '';
         state.searchQuery = '';
         clearSearchBtn.classList.remove('show');
-        renderFeed();
+        processAndRender();
         searchInput.focus();
     });
 
@@ -431,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chip.classList.add('active');
             
             state.activeFilter = chip.getAttribute('data-filter');
-            renderFeed();
+            renderFeed(); // no need to re-render stats on chip change
         });
     });
 
@@ -526,8 +584,43 @@ document.addEventListener('DOMContentLoaded', () => {
         filterChips.forEach(c => c.classList.remove('active'));
         document.querySelector('[data-filter="all"]').classList.add('active');
         state.activeFilter = 'all';
+
+        // Reset Time Range
+        timeRangeBtns.forEach(btn => btn.classList.remove('active'));
+        document.querySelector('[data-range="all"]').classList.add('active');
+        state.activeRange = 'all';
+        
+        // Reset Collapsed Days
+        state.collapsedDays = {};
         
         processAndRender();
+    });
+
+    // Time Range Selection click
+    timeRangeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            timeRangeBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            state.activeRange = btn.getAttribute('data-range');
+            processAndRender();
+        });
+    });
+
+    // Keyboard Accessibility Shortcuts
+    window.addEventListener('keydown', (e) => {
+        // Esc key closes the twitter modal
+        if (e.key === 'Escape') {
+            closeTwitterModal();
+        }
+        // '/' key focuses the search input (if not typing in text field)
+        if (e.key === '/' && document.activeElement !== searchInput && 
+            document.activeElement.tagName !== 'TEXTAREA' && 
+            document.activeElement.tagName !== 'INPUT') {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
     });
 
     // Scroll back to top visibility

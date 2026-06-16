@@ -65,12 +65,24 @@
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                         <input type="text" id="searchInput" placeholder="Search features, SQL, anomalies..." aria-label="Search release notes">
+                        <span class="search-match-count" id="searchMatchCount"></span>
                         <button class="clear-search-btn" id="clearSearchBtn" aria-label="Clear search">
                             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
                             </svg>
                         </button>
+                    </div>
+                </div>
+
+                <!-- Time Range Card -->
+                <div class="panel-card time-range-card">
+                    <h2 class="panel-title">Time Range</h2>
+                    <div class="time-range-selector" id="timeRangeSelector">
+                        <button class="time-range-btn active" data-range="all">All Time</button>
+                        <button class="time-range-btn" data-range="7">7 Days</button>
+                        <button class="time-range-btn" data-range="30">30 Days</button>
+                        <button class="time-range-btn" data-range="90">90 Days</button>
                     </div>
                 </div>
 
@@ -156,7 +168,26 @@
                 <div class="timeline" id="notesTimeline">
                     <!-- Loading state -->
                     <div class="feed-loading" id="feedLoading">
-                        <div class="spinner"></div>
+                        <div class="skeleton-wrapper">
+                            <div class="skeleton-card">
+                                <div class="skeleton-header">
+                                    <div class="skeleton-badge"></div>
+                                    <div class="skeleton-actions"></div>
+                                </div>
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-line"></div>
+                                <div class="skeleton-line medium"></div>
+                            </div>
+                            <div class="skeleton-card">
+                                <div class="skeleton-header">
+                                    <div class="skeleton-badge"></div>
+                                    <div class="skeleton-actions"></div>
+                                </div>
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-line"></div>
+                                <div class="skeleton-line"></div>
+                            </div>
+                        </div>
                         <p>Fetching BigQuery release notes...</p>
                     </div>
 
