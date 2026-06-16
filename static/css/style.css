@@ -1474,3 +1474,79 @@ body.dark-theme .link-card-description {
         padding: 1.5rem;
     }
 }
+
+/* ==========================================================================
+   Theme Sliding Switch Toggle
+   ========================================================================== */
+.theme-switch-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.theme-switch-container:hover {
+    border-color: var(--border-color-active);
+}
+
+.theme-switch-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    user-select: none;
+    transition: color var(--transition-fast);
+}
+
+.theme-switch {
+    position: relative;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    width: 44px;
+    height: 22px;
+    border-radius: 11px;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.theme-switch-slider {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    left: 2px;
+    transition: transform var(--transition-normal);
+}
+
+/* On Light Theme: move the slider to the right! */
+body.light-theme .theme-switch-slider {
+    transform: translateX(22px);
+}
+
+body.light-theme .theme-switch {
+    background: #e5e7eb;
+}
+
+/* Dim active/inactive labels based on active theme */
+body.dark-theme .theme-switch-label:nth-of-type(1) {
+    color: var(--text-title);
+}
+body.dark-theme .theme-switch-label:nth-of-type(2) {
+    color: var(--text-muted);
+}
+body.light-theme .theme-switch-label:nth-of-type(1) {
+    color: var(--text-muted);
+}
+body.light-theme .theme-switch-label:nth-of-type(2) {
+    color: var(--text-title);
+}
