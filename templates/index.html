@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Explorer</title>
+    <meta name="description" content="Explore, search, and filter the latest BigQuery release notes in a modern, interactive dashboard.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+</head>
+<body class="dark-theme">
+    <!-- Background Elements -->
+    <div class="blob-container">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                        <path d="M3 5V19A9 3 0 0 0 21 19V5"></path>
+                        <path d="M3 12A9 3 0 0 0 21 12"></path>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>BigQuery <span>Releases</span></h1>
+                    <p>Live Release Notes & Updates Explorer</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div class="sync-status" id="syncStatus">
+                    <span class="status-dot green"></span>
+                    <span class="status-text">Connected</span>
+                </div>
+                <button class="theme-toggle" id="themeToggleBtn" aria-label="Toggle light/dark theme">
+                    <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Layout -->
+        <main class="dashboard-main">
+            <!-- Left Panel / Stats & Filters -->
+            <section class="control-panel">
+                <!-- Search Box -->
+                <div class="panel-card search-card">
+                    <div class="search-wrapper">
+                        <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Search features, SQL, anomalies..." aria-label="Search release notes">
+                        <button class="clear-search-btn" id="clearSearchBtn" aria-label="Clear search">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Dashboard Widget -->
+                <div class="panel-card stats-card">
+                    <h2 class="panel-title">Overview</h2>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <span class="stat-val" id="totalUpdates">0</span>
+                            <span class="stat-lbl">Total Items</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-val" id="totalEntries">0</span>
+                            <span class="stat-lbl">Release Days</span>
+                        </div>
+                    </div>
+                    
+                    <div class="categories-breakdown">
+                        <h3 class="subsection-title">Updates by Category</h3>
+                        <div class="breakdown-list" id="categoryBreakdownList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters Widget -->
+                <div class="panel-card filter-card">
+                    <h2 class="panel-title">Filter by Category</h2>
+                    <div class="filter-chips" id="filterChipsContainer">
+                        <button class="filter-chip active" data-filter="all">
+                            <span class="chip-dot"></span> All Updates <span class="chip-count" id="count-all">0</span>
+                        </button>
+                        <button class="filter-chip" data-filter="feature">
+                            <span class="chip-dot feature"></span> Features <span class="chip-count" id="count-feature">0</span>
+                        </button>
+                        <button class="filter-chip" data-filter="change">
+                            <span class="chip-dot change"></span> Changes <span class="chip-count" id="count-change">0</span>
+                        </button>
+                        <button class="filter-chip" data-filter="breaking">
+                            <span class="chip-dot breaking"></span> Breaking <span class="chip-count" id="count-breaking">0</span>
+                        </button>
+                        <button class="filter-chip" data-filter="issue">
+                            <span class="chip-dot issue"></span> Issues <span class="chip-count" id="count-issue">0</span>
+                        </button>
+                        <button class="filter-chip" data-filter="deprecation">
+                            <span class="chip-dot deprecation"></span> Deprecations <span class="chip-count" id="count-deprecation">0</span>
+                        </button>
+                        <button class="filter-chip" data-filter="announcement">
+                            <span class="chip-dot announcement"></span> Announcements <span class="chip-count" id="count-announcement">0</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel / Content Feed -->
+            <section class="feed-panel">
+                <div class="feed-header">
+                    <div class="feed-title-wrapper">
+                        <h2 id="feedHeading">All Release Notes</h2>
+                        <span class="feed-subtitle" id="feedSubtitle">Showing latest updates</span>
+                    </div>
+                    <div class="feed-actions">
+                        <button class="action-btn" id="refreshFeedBtn" title="Force Refresh Feed">
+                            <svg class="refresh-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M1 20v-6h6"></path>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Timeline Feed -->
+                <div class="timeline" id="notesTimeline">
+                    <!-- Loading state -->
+                    <div class="feed-loading" id="feedLoading">
+                        <div class="spinner"></div>
+                        <p>Fetching BigQuery release notes...</p>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div class="feed-empty hidden" id="feedEmpty">
+                        <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                        <h3>No release notes found</h3>
+                        <p>Try adjusting your search query or filters.</p>
+                        <button class="btn-primary" id="resetFiltersBtn">Clear search & filters</button>
+                    </div>
+
+                    <!-- Entries Container -->
+                    <div id="entriesContainer"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>BigQuery Release Notes Explorer &bull; Data fetched from official GCP feeds.</p>
+            <p class="copyright">Built with Python Flask, Vanilla CSS & JS.</p>
+        </footer>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTopBtn" aria-label="Scroll to top">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5"></line>
+            <polyline points="5 12 12 5 19 12"></polyline>
+        </svg>
+    </button>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">Copied to clipboard!</div>
+
+    <!-- Twitter Composer & Live Preview Modal -->
+    <div class="modal-overlay hidden" id="twitterModal">
+        <div class="modal-card">
+            <button class="close-modal-btn" id="closeModalBtn" aria-label="Close modal">&times;</button>
+            <div class="modal-body">
+                <!-- Left Column: Composer -->
+                <div class="composer-section">
+                    <h3>Compose Update</h3>
+                    <textarea id="tweetTextarea" maxlength="350" placeholder="What's on your mind?"></textarea>
+                    
+                    <div class="composer-footer">
+                        <span class="char-counter" id="charCounter">280</span>
+                        <div class="hashtag-bank">
+                            <span class="hashtag-pill" data-tag="#BigQuery">#BigQuery</span>
+                            <span class="hashtag-pill" data-tag="#GoogleCloud">#GoogleCloud</span>
+                            <span class="hashtag-pill" data-tag="#Gemini">#Gemini</span>
+                            <span class="hashtag-pill" data-tag="#AI">#AI</span>
+                            <span class="hashtag-pill" data-tag="#DataAnalytics">#DataAnalytics</span>
+                        </div>
+                    </div>
+                    
+                    <div class="composer-actions">
+                        <button class="action-btn secondary" id="copyTweetBtn">
+                            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy text
+                        </button>
+                        <button class="btn-primary" id="publishTweetBtn">
+                            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                            </svg>
+                            Post to X
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Live X/Twitter Preview -->
+                <div class="preview-section">
+                    <h3>Live Preview</h3>
+                    <div class="tweet-preview-container">
+                        <div class="tweet-user-info">
+                            <div class="tweet-avatar-wrapper">
+                                <svg class="tweet-avatar-svg" viewBox="0 0 24 24" width="40" height="40">
+                                    <circle cx="12" cy="12" r="12" fill="#4285f4"></circle>
+                                    <path d="M6 18c0-3.3 2.7-6 6-6s6 2.7 6 6H6z" fill="#fff"></path>
+                                    <circle cx="12" cy="8" r="3" fill="#fff"></circle>
+                                </svg>
+                            </div>
+                            <div class="tweet-user-details">
+                                <div class="tweet-user-name-row">
+                                    <span class="tweet-display-name">Google Cloud BigQuery</span>
+                                    <span class="tweet-verified-badge" title="Verified Account">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="#1d9bf0">
+                                            <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.99-3.818-3.99-.48 0-.94.1-1.348.275C14.825 2.515 13.512 1.5 12 1.5s-2.825 1.015-3.422 2.285c-.408-.175-.867-.275-1.348-.275-2.11 0-3.818 1.78-3.818 3.99 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.58.875 2.95 2.148 3.6-.154.435-.238.905-.238 1.4 0 2.21 1.71 3.99 3.818 3.99.48 0 .94-.1 1.348-.275.597 1.27 1.91 2.285 3.422 2.285s2.825-1.015 3.422-2.285c.408.175.867.275 1.348.275 2.11 0 3.818-1.78 3.818-3.99 0-.495-.084-.965-.238-1.4 1.273-.65 2.148-2.02 2.148-3.6zm-12.72 3.125l-3.32-3.32 1.07-1.07 2.25 2.25 5.51-5.51 1.07 1.07-6.58 6.58z"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <span class="tweet-handle">@googlecloud</span>
+                            </div>
+                        </div>
+                        
+                        <div class="tweet-text" id="tweetLiveText">
+                            <!-- Live text sync here -->
+                        </div>
+                        
+                        <!-- Rich Link Preview Card -->
+                        <div class="tweet-link-card">
+                            <div class="link-card-image" id="linkCardImage">
+                                <div class="link-card-image-content">
+                                    <div class="gcp-brand-strip"></div>
+                                    <span class="link-card-badge" id="linkCardBadge">Feature</span>
+                                    <span class="link-card-date" id="linkCardDate">June 15, 2026</span>
+                                    <span class="link-card-logo">BigQuery</span>
+                                </div>
+                            </div>
+                            <div class="link-card-details">
+                                <span class="link-card-domain">cloud.google.com</span>
+                                <span class="link-card-title" id="linkCardTitle">BigQuery - Release notes | June 15, 2026</span>
+                                <span class="link-card-description">Keep track of the latest updates and feature launches in Google Cloud BigQuery.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
