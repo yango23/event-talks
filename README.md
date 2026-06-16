@@ -17,6 +17,8 @@ A modern, interactive web application built with **Python Flask** and **Vanilla 
 - **Overview Dashboard & Analytics**: Dynamic summary widget showing total release updates, release days, and interactive bar charts showing category distributions.
 - **Glassmorphic Theme Switcher**: Toggle between beautiful dark and light modes. Preference is remembered across sessions using `localStorage`.
 - **Clipboard Utility**: Copy full, formatted markdown-compatible summaries of release notes to your clipboard in one click.
+- **Export to CSV**: Export the currently filtered list of release notes directly to a `.csv` file in one click.
+- **Twitter/X Composer & Live Preview Card**: Write a custom tweet, preview it in a simulated verified X card in real-time, and copy or publish it.
 - **Performance Caching**: Caches parsed feed entries in-memory on the backend for 10 minutes to prevent rate-limiting and accelerate client loading speeds.
 
 ## Project Structure
